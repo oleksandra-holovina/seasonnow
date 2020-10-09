@@ -1,37 +1,55 @@
 package com.seasonnow
 
 import akka.Done
-import akka.actor.typed.{ActorSystem, SpawnProtocol}
+import akka.actor.typed.scaladsl.AskPattern._
+import akka.actor.typed.scaladsl.Behaviors
+import akka.actor.typed.{ActorRef, ActorSystem, Behavior, Props, SpawnProtocol, SupervisorStrategy}
 import akka.stream.scaladsl.Source
 import akka.util.Timeout
 import com.typesafe.config.{Config, ConfigFactory}
+import com.typesafe.scalalogging.StrictLogging
 
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContextExecutor, Future}
 import scala.util.{Failure, Success}
 
 object Main extends App {
-  Main(ActorSystem(SpawnProtocol(), "Main"))
+  Main()(ActorSystem(SpawnProtocol(), "Main"))
 }
 
 case object Fetch
-case class Main(actorSystem: ActorSystem[SpawnProtocol.Command], config: Config = ConfigFactory.load()) {
 
-  implicit val sys: ActorSystem[SpawnProtocol.Command] = actorSystem
-  implicit val ec: ExecutionContextExecutor = sys.executionContext
+case class Main(config: Config = ConfigFactory.load())(implicit val actorSystem: ActorSystem[SpawnProtocol.Command]) extends StrictLogging {
+  implicit val ec: ExecutionContextExecutor = actorSystem.executionContext
+  implicit val timeout: Timeout = Timeout(3.seconds)
 
   val settings: Settings = Settings(config)
 
-  val result: Future[Done] = Source.tick(0.second, settings.weatherFetchFrequency, Fetch)
-    .mapAsync(1) { _ =>
-      implicit val timeout: Timeout = 3.seconds
-      WeatherFetcher.fetchWeather()
-    }
-    .via(WeatherFlow.weatherToSeasonFlow())
-    .runForeach(TweetSender.send)
+  val seasonSenderBehavior: Behavior[PersistentSeasonSender.Command] = Behaviors.supervise(PersistentSeasonSender()).
+    onFailure(SupervisorStrategy.resume)
 
-  result.onComplete {
-    case Success(done) => println(s"Completed: $done")
-    case Failure(ex)   => println(s"Failed: ${ex}")
+  val seasonSenderSinkFuture: Future[ActorRef[PersistentSeasonSender.Command]] =
+    actorSystem.ask[ActorRef[PersistentSeasonSender.Command]](replyTo => SpawnProtocol.Spawn(
+      seasonSenderBehavior,
+      "SeasonSenderSink",
+      Props.empty,
+      replyTo
+    ))
+
+  seasonSenderSinkFuture.onComplete {
+    case Success(seasonSenderSink) => startStream(seasonSenderSink)
+    case Failure(exception) => logger.error("Couldn't create season sender", exception)
+  }
+
+  private def startStream(seasonSenderSink: ActorRef[PersistentSeasonSender.Command]): Unit = {
+    val result: Future[Done] = Source.tick(0.second, settings.weatherFetchFrequency, Fetch)
+      .mapAsync(1) { _ => WeatherFetcher.fetchWeather() }
+      .via(WeatherFlow.weatherToSeasonFlow())
+      .runForeach(seasonSenderSink ! PersistentSeasonSender.UpdateSeason(_))
+
+    result.onComplete {
+      case Success(done) => logger.info(s"Main stream completed: $done")
+      case Failure(ex) => logger.error(s"Main stream failed", ex)
+    }
   }
 }

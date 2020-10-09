@@ -5,6 +5,18 @@ object Dependencies {
 
   lazy val akkaActor = "com.typesafe.akka" %% "akka-actor-typed" % akkaVersion
   lazy val akkaStream = "com.typesafe.akka" %% "akka-stream-typed" % akkaVersion
+  lazy val akkaPersistence = "com.typesafe.akka" %% "akka-persistence-typed" % akkaVersion
 
-  lazy val akka: Seq[ModuleID] = Seq(akkaActor, akkaStream)
+  lazy val leveldb = "org.iq80.leveldb" % "leveldb" % "0.12"
+  lazy val leveldbIni = "org.fusesource.leveldbjni" % "leveldbjni-all" % "1.8"
+
+  lazy val logback = "ch.qos.logback" % "logback-classic" % "1.2.3"
+  lazy val scalaLogging = "com.typesafe.scala-logging" %% "scala-logging" % "3.9.2"
+
+  lazy val twitterChill = "com.twitter" %% "chill-akka" % "0.9.5"
+
+  lazy val persistence: Seq[ModuleID] = Seq(leveldb, leveldbIni)
+  lazy val akka: Seq[ModuleID] = Seq(akkaActor, akkaStream, akkaPersistence) ++ persistence
+  lazy val logging: Seq[ModuleID] = Seq(logback, scalaLogging)
+  lazy val serialization: Seq[ModuleID] = Seq(twitterChill)
 }

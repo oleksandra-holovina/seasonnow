@@ -3,7 +3,7 @@ package com.seasonnow
 import akka.NotUsed
 import akka.stream.scaladsl.Flow
 import com.seasonnow.Season.Season
-import com.seasonnow.WeatherProtocol.WeatherInfo
+import com.seasonnow.data.WeatherInfo
 
 object Season extends Enumeration {
   type Season = Value
@@ -12,6 +12,7 @@ object Season extends Enumeration {
   val SPRING = Value("spring")
   val SUMMER = Value("summer")
   val FALL = Value("fall")
+  val NOT_FETCHED = Value("unknown")
 }
 
 object WeatherFlow {
