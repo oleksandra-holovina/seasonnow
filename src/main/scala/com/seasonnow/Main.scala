@@ -49,6 +49,8 @@ case class Main(config: Config = ConfigFactory.load())(implicit val actorSystem:
       .via(WeatherFlow.weatherToSeasonFlow())
       .runForeach(seasonSenderSink ! PersistentSeasonSender.UpdateSeason(_))
 
+    logger.info("Season Now initialized")
+
     result.onComplete {
       case Success(done) => logger.info(s"Main stream completed: $done")
       case Failure(ex) => logger.error(s"Main stream failed", ex)
