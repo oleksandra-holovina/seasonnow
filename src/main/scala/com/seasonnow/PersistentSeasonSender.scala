@@ -26,7 +26,9 @@ object PersistentSeasonSender extends StrictLogging {
     ).withRetention(RetentionCriteria.snapshotEvery(settings.snapshotFrequency, settings.snapshotAmount))
 
   private val commandHandler: (State, Command) => Effect[Event, State] = (state, command) => command match {
-    case UpdateSeason(season) if state.season != season => Effect.persist(SeasonUpdated(season))
+    case UpdateSeason(season) if state.season != season =>
+      logger.info(s"State was (${state.season}), season now ($season)")
+      Effect.persist(SeasonUpdated(season))
     case UpdateSeason(season) =>
       logger.info(s"Same season $season")
       Effect.none
