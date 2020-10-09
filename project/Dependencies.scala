@@ -18,9 +18,10 @@ object Dependencies {
   lazy val scalaLogging = "com.typesafe.scala-logging" %% "scala-logging" % "3.9.2"
 
   lazy val twitterChill = "com.twitter" %% "chill-akka" % "0.9.5"
+  lazy val twitterApi = "com.danielasfregola" %% "twitter4s" % "7.0"
 
   lazy val persistence: Seq[ModuleID] = Seq(leveldb, leveldbIni)
-  lazy val http: Seq[ModuleID] = Seq(sprayJson)
+  lazy val http: Seq[ModuleID] = Seq(sprayJson, twitterApi)
 
   lazy val akka: Seq[ModuleID] = Seq(akkaActor, akkaStream, akkaPersistence, akkaHttp) ++ persistence ++ http
   lazy val logging: Seq[ModuleID] = Seq(logback, scalaLogging)

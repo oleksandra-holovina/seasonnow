@@ -17,12 +17,13 @@ case class Settings(config: Config = ConfigFactory.load()) {
 
   private val baseSettings = config.getConfig("com.seasonnow")
 
+  val env: String = baseSettings.getString("env")
   val weatherFetchFrequency: FiniteDuration = Try(baseSettings.getDuration("weather-fetch-frequency"))
     .map(_.toScala)
     .getOrElse(defaultWeatherFetchFrequency)
 
-  val weatherApiKey: String = baseSettings.getString("weather-api-key")
+  val weatherApiKey: String = baseSettings.getString("api.weather-api-key")
 
-  val snapshotFrequency: Int = Try(baseSettings.getInt("snapshot-every")).getOrElse(defaultSnapshotFrequency)
-  val snapshotAmount: Int = Try(baseSettings.getInt("keep-snapshot")).getOrElse(defaultSnapshotAmount)
+  val snapshotFrequency: Int = Try(baseSettings.getInt("persistence.snapshot-every")).getOrElse(defaultSnapshotFrequency)
+  val snapshotAmount: Int = Try(baseSettings.getInt("persistence.keep-snapshot")).getOrElse(defaultSnapshotAmount)
 }

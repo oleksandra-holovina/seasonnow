@@ -1,12 +1,16 @@
 package com.seasonnow
 
+import com.danielasfregola.twitter4s.TwitterRestClient
 import com.seasonnow.Season.Season
+import com.typesafe.config.ConfigFactory
+import com.typesafe.scalalogging.StrictLogging
 
-object TweetSender {
-  case class TweetData(text: String)
+case class TweetSender(twitterClient: TwitterRestClient, settings: Settings = Settings(ConfigFactory.load())) extends StrictLogging {
 
   def send(season: Season): Unit = {
-    val tweetData = TweetData(season.toString)
-    println(s"sending tweet $tweetData")
+    logger.info(s"Posting season ($season) to twitter")
+    if (settings.env != "local") {
+      twitterClient.createTweet(status = season.toString)
+    }
   }
 }

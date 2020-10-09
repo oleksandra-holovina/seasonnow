@@ -17,12 +17,12 @@ object PersistentSeasonSender extends StrictLogging {
 
   final case class State(season: Season)
 
-  def apply(settings: Settings = Settings(ConfigFactory.load())): Behavior[Command] =
+  def apply(tweetSender: TweetSender, settings: Settings = Settings(ConfigFactory.load())): Behavior[Command] =
     EventSourcedBehavior[Command, Event, State](
       persistenceId = PersistenceId.ofUniqueId("persistent-season"),
       emptyState = State(Season.NOT_FETCHED),
       commandHandler = commandHandler,
-      eventHandler = eventHandler
+      eventHandler = eventHandler(tweetSender)
     ).withRetention(RetentionCriteria.snapshotEvery(settings.snapshotFrequency, settings.snapshotAmount))
 
   private val commandHandler: (State, Command) => Effect[Event, State] = (state, command) => command match {
@@ -32,9 +32,9 @@ object PersistentSeasonSender extends StrictLogging {
       Effect.none
   }
 
-  private val eventHandler: (State, Event) => State = (state, event) => event match {
+  private def eventHandler(tweetSender: TweetSender): (State, Event) => State = (state, event) => event match {
     case SeasonUpdated(season) =>
-      TweetSender.send(season)
+      tweetSender.send(season)
       state.copy(season)
   }
 }

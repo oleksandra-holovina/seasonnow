@@ -7,11 +7,11 @@ import com.seasonnow.Season.Season
 object Season extends Enumeration {
   type Season = Value
 
-  val WINTER = Value("winter")
-  val SPRING = Value("spring")
-  val SUMMER = Value("summer")
-  val FALL = Value("fall")
-  val NOT_FETCHED = Value("unknown")
+  val WINTER = Value("Winter")
+  val SPRING = Value("Spring")
+  val SUMMER = Value("Summer")
+  val FALL = Value("Fall")
+  val NOT_FETCHED = Value("Unknown")
 }
 
 object WeatherFlow {

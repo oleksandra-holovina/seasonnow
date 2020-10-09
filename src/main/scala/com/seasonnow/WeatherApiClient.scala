@@ -11,6 +11,7 @@ import com.typesafe.config.ConfigFactory
 import spray.json.DefaultJsonProtocol
 
 import scala.concurrent.{ExecutionContextExecutor, Future}
+import scala.util.Random
 
 case class MainInfo(temp: Double)
 
@@ -27,12 +28,16 @@ object WeatherApiClient {
 
   def fetchCurrentTemperature(settings: Settings = Settings(ConfigFactory.load()))
                              (implicit actorSystem: ActorSystem[Command], ec: ExecutionContextExecutor): Future[Double] = {
-    val chicagoId = 4887398
-    val path = s"https://api.openweathermap.org/data/2.5/weather?id=$chicagoId&appid=${settings.weatherApiKey}&units=imperial"
+    if (settings.env == "local") {
+      Future.successful(Random.nextDouble() * 100)
+    } else {
+      val chicagoId = 4887398
+      val path = s"https://api.openweathermap.org/data/2.5/weather?id=$chicagoId&appid=${settings.weatherApiKey}&units=imperial"
 
-    Http()
-      .singleRequest(Get(path))
-      .flatMap(extractResponse(_))
+      Http()
+        .singleRequest(Get(path))
+        .flatMap(extractResponse(_))
+    }
   }
 
   private def extractResponse(response: HttpResponse)(implicit actorSystem: ActorSystem[Command], ec: ExecutionContextExecutor): Future[Double] = {
