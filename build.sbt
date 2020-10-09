@@ -1,9 +1,11 @@
 import Dependencies._
 
-name := "SeasonNow"
+ThisBuild / version := "0.1"
+ThisBuild / scalaVersion := "2.13.3"
 
-version := "0.1"
-
-scalaVersion := "2.13.3"
-
-libraryDependencies ++= akka ++ logging ++ serialization
+lazy val root = (project in file("."))
+  .enablePlugins(JavaAppPackaging)
+  .settings(
+    name := "SeasonNow",
+    libraryDependencies ++= akka ++ logging ++ serialization
+  )
