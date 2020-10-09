@@ -3,7 +3,6 @@ package com.seasonnow
 import akka.NotUsed
 import akka.stream.scaladsl.Flow
 import com.seasonnow.Season.Season
-import com.seasonnow.data.WeatherInfo
 
 object Season extends Enumeration {
   type Season = Value
@@ -17,9 +16,8 @@ object Season extends Enumeration {
 
 object WeatherFlow {
 
-  def weatherToSeasonFlow(): Flow[WeatherInfo, Season, NotUsed] =
-    Flow.apply[WeatherInfo]
-      .map(_.temperature)
+  def weatherToSeasonFlow(): Flow[Double, Season, NotUsed] =
+    Flow.apply
       .map {
         case it if it < 48 => Season.WINTER
         case it if it >= 48 && it < 61 => Season.FALL

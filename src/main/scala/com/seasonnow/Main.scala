@@ -25,8 +25,8 @@ case class Main(config: Config = ConfigFactory.load())(implicit val actorSystem:
 
   val settings: Settings = Settings(config)
 
-  val seasonSenderBehavior: Behavior[PersistentSeasonSender.Command] = Behaviors.supervise(PersistentSeasonSender()).
-    onFailure(SupervisorStrategy.resume)
+  val seasonSenderBehavior: Behavior[PersistentSeasonSender.Command] = Behaviors.supervise(PersistentSeasonSender())
+    .onFailure(SupervisorStrategy.resume)
 
   val seasonSenderSinkFuture: Future[ActorRef[PersistentSeasonSender.Command]] =
     actorSystem.ask[ActorRef[PersistentSeasonSender.Command]](replyTo => SpawnProtocol.Spawn(
@@ -43,7 +43,7 @@ case class Main(config: Config = ConfigFactory.load())(implicit val actorSystem:
 
   private def startStream(seasonSenderSink: ActorRef[PersistentSeasonSender.Command]): Unit = {
     val result: Future[Done] = Source.tick(0.second, settings.weatherFetchFrequency, Fetch)
-      .mapAsync(1) { _ => WeatherFetcher.fetchWeather() }
+      .mapAsync(1) { _ => WeatherApiClient.fetchCurrentTemperature() }
       .via(WeatherFlow.weatherToSeasonFlow())
       .runForeach(seasonSenderSink ! PersistentSeasonSender.UpdateSeason(_))
 

@@ -21,6 +21,8 @@ case class Settings(config: Config = ConfigFactory.load()) {
     .map(_.toScala)
     .getOrElse(defaultWeatherFetchFrequency)
 
+  val weatherApiKey: String = baseSettings.getString("weather-api-key")
+
   val snapshotFrequency: Int = Try(baseSettings.getInt("snapshot-every")).getOrElse(defaultSnapshotFrequency)
   val snapshotAmount: Int = Try(baseSettings.getInt("keep-snapshot")).getOrElse(defaultSnapshotAmount)
 }
