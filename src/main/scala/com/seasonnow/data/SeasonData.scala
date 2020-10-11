@@ -14,6 +14,6 @@ object SeasonData {
     val NOT_FETCHED = Value("Unknown")
   }
 
-  case class SeasonInfo(temp: Double, zipcode: String, season: Season)
+  case class SeasonInfo(temp: Double, zipcode: Option[String], season: Season)
 
 }

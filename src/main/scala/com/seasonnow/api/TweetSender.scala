@@ -28,10 +28,14 @@ case class TweetSender(twitterClient: TwitterRestClient, settings: Settings = Se
 
   private def createStatus(seasonInfo: SeasonInfo, lastSeen: Option[LocalDateTime]): String = {
     val lastSeenText = lastSeen
-      .map(time => s"Last time this season was ${DateUtils.calculateLastSeen(time, now())} ago.")
+      .map(time => s" Last time this season was ${DateUtils.calculateLastSeen(time, now())} ago.")
       .getOrElse("")
 
-    s"The season in Chicago has changed! It is ${seasonInfo.season} now (${seasonInfo.temp}F). $lastSeenText"
+    val zipcodeText = seasonInfo.zipcode
+      .map(zipcode => s" at $zipcode zipcode")
+      .getOrElse("")
+
+    s"The season in Chicago has changed! It is ${seasonInfo.season} now (${seasonInfo.temp}F$zipcodeText).$lastSeenText"
   }
 
   private[api] def now(): LocalDateTime = LocalDateTime.now()
