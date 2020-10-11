@@ -27,6 +27,7 @@ object Dependencies {
   lazy val wordSpec = "org.scalatest" %% "scalatest-wordspec" % scalaTestVersion
   lazy val mockito = "org.mockito" %% "mockito-scala" % "1.16.0"
   lazy val akkaTest = "com.typesafe.akka" %% "akka-actor-testkit-typed" % akkaVersion
+  lazy val akkaPersistenceTest = "com.typesafe.akka" %% "akka-persistence-testkit" % akkaVersion
 
   lazy val persistence: Seq[ModuleID] = Seq(leveldb, leveldbIni)
   lazy val http: Seq[ModuleID] = Seq(sprayJson, twitterApi)
@@ -34,5 +35,11 @@ object Dependencies {
   lazy val akka: Seq[ModuleID] = Seq(akkaActor, akkaStream, akkaPersistence, akkaHttp) ++ persistence ++ http
   lazy val logging: Seq[ModuleID] = Seq(logback, scalaLogging)
   lazy val serialization: Seq[ModuleID] = Seq(twitterChill)
-  lazy val commonTest: Seq[ModuleID] = Seq(scalaTest % Test, wordSpec % Test, mockito % Test, akkaTest % Test)
+  lazy val commonTest: Seq[ModuleID] = Seq(
+    scalaTest % Test,
+    wordSpec % Test,
+    mockito % Test,
+    akkaTest % Test,
+    akkaPersistenceTest % Test
+  )
 }

@@ -8,6 +8,8 @@ import akka.stream.scaladsl.Source
 import akka.util.Timeout
 import com.danielasfregola.twitter4s.TwitterRestClient
 import com.seasonnow.api.{TweetSender, WeatherApiClient}
+import com.seasonnow.persistence.PersistentSeasonSender
+import com.seasonnow.persistence.SeasonSendingProtocol.{Command, UpdateSeason}
 import com.typesafe.config.{Config, ConfigFactory}
 import com.typesafe.scalalogging.StrictLogging
 
@@ -28,11 +30,11 @@ case class Main(config: Config = ConfigFactory.load())(implicit val actorSystem:
   val settings: Settings = Settings(config)
 
   val tweetSender: TweetSender = api.TweetSender(TwitterRestClient())
-  val seasonSenderBehavior: Behavior[PersistentSeasonSender.Command] = Behaviors.supervise(PersistentSeasonSender(tweetSender))
+  val seasonSenderBehavior: Behavior[Command] = Behaviors.supervise(PersistentSeasonSender(tweetSender).behavior())
     .onFailure(SupervisorStrategy.resume)
 
-  val seasonSenderSinkFuture: Future[ActorRef[PersistentSeasonSender.Command]] =
-    actorSystem.ask[ActorRef[PersistentSeasonSender.Command]](replyTo => SpawnProtocol.Spawn(
+  val seasonSenderSinkFuture: Future[ActorRef[Command]] =
+    actorSystem.ask[ActorRef[Command]](replyTo => SpawnProtocol.Spawn(
       seasonSenderBehavior,
       "SeasonSenderSink",
       Props.empty,
@@ -44,11 +46,11 @@ case class Main(config: Config = ConfigFactory.load())(implicit val actorSystem:
     case Failure(exception) => logger.error("Couldn't create season sender", exception)
   }
 
-  private def startStream(seasonSenderSink: ActorRef[PersistentSeasonSender.Command]): Unit = {
+  private def startStream(seasonSenderSink: ActorRef[Command]): Unit = {
     val result: Future[Done] = Source.tick(0.second, settings.weatherFetchFrequency, Fetch)
       .mapAsync(1) { _ => WeatherApiClient.fetchCurrentTemperature() }
-      .via(WeatherFlow.weatherToSeasonFlow())
-      .runForeach(seasonSenderSink ! PersistentSeasonSender.UpdateSeason(_))
+      .via(SeasonFlow.weatherToSeasonFlow())
+      .runForeach(seasonSenderSink ! UpdateSeason(_))
 
     logger.info("Season Now initialized")
 

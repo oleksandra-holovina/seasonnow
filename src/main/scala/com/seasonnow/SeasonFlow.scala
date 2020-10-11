@@ -7,7 +7,7 @@ import com.seasonnow.data.SeasonData.{Season, SeasonInfo}
 import com.seasonnow.data.WeatherData.WeatherInfo
 import com.typesafe.scalalogging.StrictLogging
 
-object WeatherFlow extends StrictLogging {
+object SeasonFlow extends StrictLogging {
 
   def weatherToSeasonFlow(): Flow[WeatherInfo, SeasonInfo, NotUsed] =
     Flow.apply[WeatherInfo]
