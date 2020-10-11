@@ -2,26 +2,18 @@ package com.seasonnow
 
 import akka.NotUsed
 import akka.stream.scaladsl.Flow
-import com.seasonnow.Season.Season
-
-object Season extends Enumeration {
-  type Season = Value
-
-  val WINTER = Value("Winter")
-  val SPRING = Value("Spring")
-  val SUMMER = Value("Summer")
-  val FALL = Value("Fall")
-  val NOT_FETCHED = Value("Unknown")
-}
+import com.seasonnow.data.SeasonData.{Season, SeasonInfo}
+import com.seasonnow.data.WeatherData.WeatherInfo
 
 object WeatherFlow {
 
-  def weatherToSeasonFlow(): Flow[Double, Season, NotUsed] =
-    Flow.apply
+  def weatherToSeasonFlow(): Flow[WeatherInfo, SeasonInfo, NotUsed] =
+    Flow.apply[WeatherInfo]
+      .map(_.main.temp)
       .map {
-        case it if it < 48 => Season.WINTER
-        case it if it >= 48 && it < 61 => Season.FALL
-        case it if it >= 61 && it < 67 => Season.SPRING
-        case it if it >= 67 => Season.SUMMER
+        case temp if temp < 48 => SeasonInfo(temp, "", Season.WINTER)
+        case temp if temp >= 48 && temp < 61 => SeasonInfo(temp, "", Season.FALL)
+        case temp if temp >= 61 && temp < 67 => SeasonInfo(temp, "", Season.SPRING)
+        case temp if temp >= 67 => SeasonInfo(temp, "", Season.SUMMER)
       }
 }

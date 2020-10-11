@@ -7,6 +7,7 @@ import akka.actor.typed.{ActorRef, ActorSystem, Behavior, Props, SpawnProtocol, 
 import akka.stream.scaladsl.Source
 import akka.util.Timeout
 import com.danielasfregola.twitter4s.TwitterRestClient
+import com.seasonnow.api.{TweetSender, WeatherApiClient}
 import com.typesafe.config.{Config, ConfigFactory}
 import com.typesafe.scalalogging.StrictLogging
 
@@ -26,7 +27,7 @@ case class Main(config: Config = ConfigFactory.load())(implicit val actorSystem:
 
   val settings: Settings = Settings(config)
 
-  val tweetSender: TweetSender = TweetSender(TwitterRestClient())
+  val tweetSender: TweetSender = api.TweetSender(TwitterRestClient())
   val seasonSenderBehavior: Behavior[PersistentSeasonSender.Command] = Behaviors.supervise(PersistentSeasonSender(tweetSender))
     .onFailure(SupervisorStrategy.resume)
 

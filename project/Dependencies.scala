@@ -3,6 +3,9 @@ import sbt._
 object Dependencies {
   val akkaVersion = "2.6.9"
   val akkaHttpVersion = "10.2.1"
+  val scalaTestVersion = "3.2.0"
+
+  val Test = "test"
 
   lazy val akkaActor = "com.typesafe.akka" %% "akka-actor-typed" % akkaVersion
   lazy val akkaStream = "com.typesafe.akka" %% "akka-stream-typed" % akkaVersion
@@ -20,10 +23,16 @@ object Dependencies {
   lazy val twitterChill = "com.twitter" %% "chill-akka" % "0.9.5"
   lazy val twitterApi = "com.danielasfregola" %% "twitter4s" % "7.0"
 
+  lazy val scalaTest = "org.scalatest" %% "scalatest" % scalaTestVersion
+  lazy val wordSpec = "org.scalatest" %% "scalatest-wordspec" % scalaTestVersion
+  lazy val mockito = "org.mockito" %% "mockito-scala" % "1.16.0"
+  lazy val akkaTest = "com.typesafe.akka" %% "akka-actor-testkit-typed" % akkaVersion
+
   lazy val persistence: Seq[ModuleID] = Seq(leveldb, leveldbIni)
   lazy val http: Seq[ModuleID] = Seq(sprayJson, twitterApi)
 
   lazy val akka: Seq[ModuleID] = Seq(akkaActor, akkaStream, akkaPersistence, akkaHttp) ++ persistence ++ http
   lazy val logging: Seq[ModuleID] = Seq(logback, scalaLogging)
   lazy val serialization: Seq[ModuleID] = Seq(twitterChill)
+  lazy val commonTest: Seq[ModuleID] = Seq(scalaTest % Test, wordSpec % Test, mockito % Test, akkaTest % Test)
 }
