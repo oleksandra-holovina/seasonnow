@@ -6,13 +6,12 @@ import com.danielasfregola.twitter4s.TwitterRestClient
 import com.seasonnow.Settings
 import com.seasonnow.data.SeasonData.SeasonInfo
 import com.seasonnow.utils.DateUtils
-import com.typesafe.config.ConfigFactory
 import com.typesafe.scalalogging.StrictLogging
 
 import scala.concurrent.ExecutionContextExecutor
 import scala.util.{Failure, Success}
 
-case class TweetSender(twitterClient: TwitterRestClient, settings: Settings = Settings(ConfigFactory.load()))(implicit ec: ExecutionContextExecutor)
+case class TweetSender(twitterClient: TwitterRestClient, settings: Settings = Settings())(implicit ec: ExecutionContextExecutor)
   extends StrictLogging {
 
   def send(seasonInfo: SeasonInfo, lastSeen: Option[LocalDateTime]): Unit = {

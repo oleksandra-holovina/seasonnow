@@ -7,7 +7,6 @@ import akka.http.scaladsl.client.RequestBuilding.Get
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import com.seasonnow.Settings
 import com.seasonnow.data.WeatherData.{Coordinates, MainInfo, WeatherInfo}
-import com.typesafe.config.ConfigFactory
 
 import scala.concurrent.{ExecutionContextExecutor, Future}
 import scala.util.Random
@@ -16,8 +15,7 @@ object WeatherApiClient {
 
   import com.seasonnow.data.WeatherData.WeatherJsonSupport._
 
-  def fetchCurrentTemperature(settings: Settings = Settings(ConfigFactory.load()))
-                             (implicit actorSystem: ActorSystem[Command], ec: ExecutionContextExecutor): Future[WeatherInfo] = {
+  def fetchCurrentTemperature(settings: Settings = Settings())(implicit actorSystem: ActorSystem[Command], ec: ExecutionContextExecutor): Future[WeatherInfo] = {
     if (settings.env == "local") {
       Future.successful(WeatherInfo(Coordinates(Random.nextDouble(), Random.nextDouble()), MainInfo(Random.nextDouble() * 100)))
     } else {

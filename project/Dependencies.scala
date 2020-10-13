@@ -4,6 +4,7 @@ object Dependencies {
   val akkaVersion = "2.6.9"
   val akkaHttpVersion = "10.2.1"
   val scalaTestVersion = "3.2.0"
+  val slickVersion = "3.3.2"
 
   val Test = "test"
 
@@ -17,6 +18,11 @@ object Dependencies {
   lazy val leveldb = "org.iq80.leveldb" % "leveldb" % "0.12"
   lazy val leveldbIni = "org.fusesource.leveldbjni" % "leveldbjni-all" % "1.8"
 
+  lazy val akkaPersistenceJdbc = "com.lightbend.akka" %% "akka-persistence-jdbc" % "4.0.0"
+  lazy val slick = "com.typesafe.slick" %% "slick" % slickVersion
+  lazy val slickHikaricp = "com.typesafe.slick" %% "slick-hikaricp" % slickVersion
+  lazy val postgres = "org.postgresql" % "postgresql" % "42.2.17"
+
   lazy val logback = "ch.qos.logback" % "logback-classic" % "1.2.3"
   lazy val scalaLogging = "com.typesafe.scala-logging" %% "scala-logging" % "3.9.2"
 
@@ -29,7 +35,7 @@ object Dependencies {
   lazy val akkaTest = "com.typesafe.akka" %% "akka-actor-testkit-typed" % akkaVersion
   lazy val akkaPersistenceTest = "com.typesafe.akka" %% "akka-persistence-testkit" % akkaVersion
 
-  lazy val persistence: Seq[ModuleID] = Seq(leveldb, leveldbIni)
+  lazy val persistence: Seq[ModuleID] = Seq(leveldb, leveldbIni, akkaPersistenceJdbc, slick, slickHikaricp, postgres)
   lazy val http: Seq[ModuleID] = Seq(sprayJson, twitterApi)
 
   lazy val akka: Seq[ModuleID] = Seq(akkaActor, akkaStream, akkaPersistence, akkaHttp) ++ persistence ++ http
