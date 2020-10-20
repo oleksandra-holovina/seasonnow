@@ -1,13 +1,14 @@
 package com.seasonnow
 
 import akka.Done
+import akka.actor.typed.{ActorRef, ActorSystem, Behavior, Props, SpawnProtocol, SupervisorStrategy}
 import akka.actor.typed.scaladsl.AskPattern._
 import akka.actor.typed.scaladsl.Behaviors
-import akka.actor.typed.{ActorRef, ActorSystem, Behavior, Props, SpawnProtocol, SupervisorStrategy}
 import akka.stream.scaladsl.Source
 import akka.util.Timeout
 import com.danielasfregola.twitter4s.TwitterRestClient
-import com.seasonnow.api.{TweetSender, WeatherApiClient}
+import com.seasonnow.api.WeatherApiClient
+import com.seasonnow.api.twitter.{DefaultTweetSender, LocalTweetSender, TweetSender}
 import com.seasonnow.persistence.PersistentSeasonSender
 import com.seasonnow.persistence.SeasonSendingProtocol.{Command, UpdateSeason}
 import com.typesafe.config.{Config, ConfigFactory}
@@ -29,7 +30,7 @@ case class Main(config: Config = ConfigFactory.load())(implicit val actorSystem:
 
   val settings: Settings = Settings(config)
 
-  val tweetSender: TweetSender = api.TweetSender(TwitterRestClient())
+  val tweetSender: TweetSender = if (settings.env == "local") LocalTweetSender() else DefaultTweetSender(TwitterRestClient())
   val seasonSenderBehavior: Behavior[Command] = Behaviors.supervise(PersistentSeasonSender(tweetSender).behavior())
     .onFailure(SupervisorStrategy.resume)
 

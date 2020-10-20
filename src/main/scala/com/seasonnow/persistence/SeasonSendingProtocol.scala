@@ -11,6 +11,7 @@ object SeasonSendingProtocol {
 
   sealed trait Event
   final case class SeasonUpdated(season: Season, seasonLastSeen: LocalDateTime) extends Event
+  final case class AllSeasonsTodayPosted(season: Season, now: LocalDateTime) extends Event
 
-  final case class State(season: Season = Season.NOT_FETCHED, seasonLastSeen: Map[Season, LocalDateTime] = Map.empty)
+  final case class State(season: Season = Season.NOT_FETCHED, seasonLastSeen: Map[Season, LocalDateTime] = Map.empty, allSeasonsPostCreated: Option[LocalDateTime] = None)
 }
