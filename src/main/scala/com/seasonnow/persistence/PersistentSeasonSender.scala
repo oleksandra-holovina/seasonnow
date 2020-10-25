@@ -27,16 +27,16 @@ case class PersistentSeasonSender(tweetSender: TweetSender, settings: Settings =
 
   private def commandHandler(state: State, command: Command): Effect[Event, State] =
     command match {
-      case UpdateSeason(seasonInfo) if state.season != seasonInfo.season =>
-        Effect.persist(tweetAndPersist(seasonInfo, state))
       case UpdateSeason(seasonInfo) =>
-        logger.info(s"Same season $seasonInfo")
-        Effect.persist(SeasonUpdated(seasonInfo.season, now()))
+        if (state.season != seasonInfo.season) {
+          tweetSender.postSeasonUpdate(seasonInfo, state.seasonLastSeen.get(seasonInfo.season))
+        } else {
+          logger.info(s"Same season $seasonInfo")
+        }
+        Effect.persist(tweetAndPersist(seasonInfo, state))
     }
 
   private def tweetAndPersist(seasonInfo: SeasonInfo, state: State): Seq[Event] = {
-    tweetSender.postSeasonUpdate(seasonInfo, state.seasonLastSeen.get(seasonInfo.season))
-
     val allSeasonsEvent = if (haveAllSeasonsBeenToday(state.seasonLastSeen, state.allSeasonsPostCreated)) {
       tweetSender.postAllSeasonsStatus()
       Seq(AllSeasonsTodayPosted(seasonInfo.season, now()))

@@ -17,8 +17,8 @@ import org.scalatest.wordspec.FixtureAnyWordSpecLike
 
 object PersistentSeasonSenderSpec {
   val temp: Double = 15.8
-  val season: SeasonData.Season.Value = Season.SPRING
-  val newSeason: SeasonData.Season.Value = Season.FALL
+  val season: SeasonData.Season.Value = Season.FALL
+  val newSeason: SeasonData.Season.Value = Season.SPRING
   val zipcode: Option[String] = Some("60606")
 
   val seasonInfo: SeasonInfo = SeasonInfo(temp, zipcode, season)
