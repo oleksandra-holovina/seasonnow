@@ -29,7 +29,7 @@ case class PersistentSeasonSender(tweetSender: TweetSender, settings: Settings =
     command match {
       case UpdateSeason(seasonInfo) =>
         if (state.season != seasonInfo.season) {
-          tweetSender.postSeasonUpdate(seasonInfo, state.seasonLastSeen.get(seasonInfo.season))
+          tweetSender.postSeasonUpdate(seasonInfo, state.seasonDetails.get(seasonInfo.season).map(_.lastOccurred))
         } else {
           logger.info(s"Same season $seasonInfo")
         }
@@ -37,19 +37,19 @@ case class PersistentSeasonSender(tweetSender: TweetSender, settings: Settings =
     }
 
   private def tweetAndPersist(seasonInfo: SeasonInfo, state: State): Seq[Event] = {
-    val allSeasonsEvent = if (haveAllSeasonsBeenToday(state.seasonLastSeen, state.allSeasonsPostCreated)) {
-      tweetSender.postAllSeasonsStatus()
-      Seq(AllSeasonsTodayPosted(seasonInfo.season, now()))
+    val allSeasonsEvent = if (haveAllSeasonsBeenToday(state.seasonDetails, state.allSeasonsPostCreated)) {
+      tweetSender.postAllSeasonsStatus(state.seasonDetails)
+      Seq(AllSeasonsTodayPosted(now()))
     } else {
       Seq.empty
     }
-    Seq(SeasonUpdated(seasonInfo.season, now())) ++ allSeasonsEvent
+    Seq(SeasonUpdated(seasonInfo.season, SeasonStateDetails(seasonInfo.temp, now()))) ++ allSeasonsEvent
   }
 
-  private def haveAllSeasonsBeenToday(seasonMap: Map[Season, LocalDateTime], allSeasonPostedAt: Option[LocalDateTime]): Boolean = {
+  private def haveAllSeasonsBeenToday(seasonMap: Map[Season, SeasonStateDetails], allSeasonPostedAt: Option[LocalDateTime]): Boolean = {
     val today = now().toLocalDate
-    val isAfterPost: Season => Option[LocalDateTime] = season => seasonMap.get(season)
-      .filter(dateTime => dateTime.toLocalDate == today && (allSeasonPostedAt.isEmpty || dateTime.isAfter(allSeasonPostedAt.get)))
+    val isAfterPost: Season => Option[SeasonStateDetails] = season => seasonMap.get(season)
+      .filter(details => details.lastOccurred.toLocalDate == today && (allSeasonPostedAt.isEmpty || details.lastOccurred.isAfter(allSeasonPostedAt.get)))
 
     Seq(
       isAfterPost(Season.FALL),
@@ -61,8 +61,8 @@ case class PersistentSeasonSender(tweetSender: TweetSender, settings: Settings =
 
   private def eventHandler(state: State, event: Event): State =
     event match {
-      case SeasonUpdated(season, lastSeen) => state.copy(season, state.seasonLastSeen.updated(season, lastSeen))
-      case AllSeasonsTodayPosted(season, now) => state.copy(season, state.seasonLastSeen.updated(season, now), Some(now))
+      case SeasonUpdated(season, seasonDetails) => state.copy(season, state.seasonDetails.updated(season, seasonDetails))
+      case AllSeasonsTodayPosted(now) => state.copy(allSeasonsPostCreated = Some(now))
     }
 
   private[persistence] def now(): LocalDateTime = LocalDateTime.now()

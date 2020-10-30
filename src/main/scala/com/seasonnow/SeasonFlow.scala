@@ -26,10 +26,10 @@ object SeasonFlow extends StrictLogging {
 
   private def determineSeason(weatherInfo: WeatherInfo): Season = {
     weatherInfo.main.temp match {
-      case temp if temp < 48 => Season.WINTER
-      case temp if temp >= 48 && temp < 61 => Season.FALL
-      case temp if temp >= 61 && temp < 67 => Season.SPRING
-      case temp if temp >= 67 => Season.SUMMER
+      case temp if temp < 41 => Season.WINTER
+      case temp if temp >= 41 && temp < 59 => Season.FALL
+      case temp if temp >= 59 && temp < 75 => Season.SPRING
+      case temp if temp >= 75 => Season.SUMMER
     }
   }
 }

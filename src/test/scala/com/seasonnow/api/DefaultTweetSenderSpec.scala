@@ -9,6 +9,8 @@ import com.seasonnow.Settings
 import com.seasonnow.api.twitter.DefaultTweetSender
 import com.seasonnow.data.SeasonData.Season.Season
 import com.seasonnow.data.SeasonData.{Season, SeasonInfo}
+import com.seasonnow.persistence.SeasonSendingProtocol.SeasonStateDetails
+import com.seasonnow.utils.DateUtils
 import com.typesafe.config.ConfigFactory
 import org.mockito.ArgumentMatchers.any
 import org.mockito.{Mockito, MockitoSugar}
@@ -30,12 +32,21 @@ class DefaultTweetSenderSpec extends ScalaTestWithActorTestKit with FixtureAnyWo
   import DefaultTweetSenderSpec._
 
   "Tweet Sender" should {
-    "construct a status with last seen part" in { f =>
+    "construct a status with last seen part " in { f =>
+      val seasonInfo = SeasonInfo(temp, Some(zipcode), season)
+      val lastSeen = f.now.minusDays(5)
+      f.tweetSender.postSeasonUpdate(seasonInfo, Some(lastSeen))
+
+      val status = s"It is now ${season.toString} in Chicago (${temp}F at $zipcode zipcode).\nThe last time it was ${season.toString} was 5 days ago."
+      verify(f.twitterClient).createTweet(status = status)
+    }
+
+    "construct a status without last seen part due to close dates" in { f =>
       val seasonInfo = SeasonInfo(temp, Some(zipcode), season)
       val lastSeen = f.now.minusHours(2)
       f.tweetSender.postSeasonUpdate(seasonInfo, Some(lastSeen))
 
-      val status = s"The season in Chicago has changed! It is ${season.toString} now (${temp}F at $zipcode zipcode). Last time this season was 2 hours ago."
+      val status = s"It is now ${season.toString} in Chicago (${temp}F at $zipcode zipcode)."
       verify(f.twitterClient).createTweet(status = status)
     }
 
@@ -43,7 +54,7 @@ class DefaultTweetSenderSpec extends ScalaTestWithActorTestKit with FixtureAnyWo
       val seasonInfo = SeasonInfo(temp, Some(zipcode), season)
       f.tweetSender.postSeasonUpdate(seasonInfo, None)
 
-      val status = s"The season in Chicago has changed! It is ${season.toString} now (${temp}F at $zipcode zipcode)."
+      val status = s"It is now ${season.toString} in Chicago (${temp}F at $zipcode zipcode)."
       verify(f.twitterClient).createTweet(status = status)
     }
 
@@ -51,7 +62,26 @@ class DefaultTweetSenderSpec extends ScalaTestWithActorTestKit with FixtureAnyWo
       val seasonInfo = SeasonInfo(temp, None, season)
       f.tweetSender.postSeasonUpdate(seasonInfo, None)
 
-      val status = s"The season in Chicago has changed! It is ${season.toString} now (${temp}F)."
+      val status = s"It is now ${season.toString} in Chicago (${temp}F)."
+      verify(f.twitterClient).createTweet(status = status)
+    }
+
+    "construct all 4 seasons status" in { f =>
+      val lastSeenMap = Map(
+        Season.WINTER -> SeasonStateDetails(44, f.now.minusHours(1)),
+        Season.SPRING -> SeasonStateDetails(55, f.now.minusHours(2)),
+        Season.SUMMER -> SeasonStateDetails(88, f.now.minusHours(3)),
+        Season.FALL -> SeasonStateDetails(53, f.now.minusHours(4)),
+      )
+      f.tweetSender.postAllSeasonsStatus(lastSeenMap)
+
+      val status =
+        s"""Chicago experienced all 4 seasons today! It was 44.0 at ${DateUtils.formatTime(f.now.minusHours(1))},
+           |and 55.0 at ${DateUtils.formatTime(f.now.minusHours(2))},
+           |and 88.0 at ${DateUtils.formatTime(f.now.minusHours(3))},
+           |and 53.0 at ${DateUtils.formatTime(f.now.minusHours(4))}."""
+          .stripMargin.replace("\n", " ")
+
       verify(f.twitterClient).createTweet(status = status)
     }
   }

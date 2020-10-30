@@ -34,30 +34,31 @@ class PersistentSeasonSenderSpec
   "Persistent Season Sender" should {
 
     "update season only when it's different than previous" in { f =>
-      runAndVerify(f, seasonInfo, Map(season -> f.now))
+      runAndVerify(f, seasonInfo, Map(season -> SeasonStateDetails(temp, f.now)))
 
       reset(f.tweetSender)
 
       val now2 = LocalDateTime.of(2020, 10, 10, 13, 45, 0)
       Mockito.when(f.seasonSender.now()).thenReturn(now2)
 
-      runAndVerify(f, seasonInfo.copy(temp = temp + 3), Map(season -> now2), shouldCallTwitter = false)
-      runAndVerify(f, seasonInfo.copy(season = newSeason), Map(season -> now2, newSeason -> now2))
+      val seasonDetails = SeasonStateDetails(temp, now2)
+      runAndVerify(f, seasonInfo.copy(temp = temp + 3), Map(season -> seasonDetails.copy(temp = temp + 3)), shouldCallTwitter = false)
+      runAndVerify(f, seasonInfo.copy(season = newSeason), Map(season -> seasonDetails.copy(temp = temp + 3), newSeason -> seasonDetails))
 
       reset(f.tweetSender)
 
-      runAndVerify(f, seasonInfo, Map(season -> now2, newSeason -> now2), lastSeen = Some(now2))
+      runAndVerify(f, seasonInfo, Map(season -> seasonDetails, newSeason -> seasonDetails), lastSeen = Some(now2))
     }
 
     "send all 4 seasons message only once " in { f =>
       val seasonMap = runAndVerifyAllSeasons(f, f.now)
       runAndVerify(f, seasonInfo, seasonMap, allSeasonsPostCreated = Some(f.now)) //on next season update
-      verify(f.tweetSender).postAllSeasonsStatus()
+      verify(f.tweetSender).postAllSeasonsStatus(seasonMap)
 
       reset(f.tweetSender)
 
       runAndVerify(f, seasonInfo.copy(season = newSeason), seasonMap, Some(f.now), Some(f.now))
-      verify(f.tweetSender, never).postAllSeasonsStatus()
+      verify(f.tweetSender, never).postAllSeasonsStatus(seasonMap)
     }
 
     "not send all 4 seasons message for different dates" in { f =>
@@ -66,13 +67,13 @@ class PersistentSeasonSenderSpec
 
       val seasonMap = runAndVerifyAllSeasons(f, now2)
       runAndVerify(f, seasonInfo, seasonMap)
-      verify(f.tweetSender, never).postAllSeasonsStatus()
+      verify(f.tweetSender, never).postAllSeasonsStatus(seasonMap)
     }
   }
 
   private def runAndVerify(f: FixtureParam,
                            seasonInfo: SeasonInfo,
-                           lastSeenSeasons: Map[Season, LocalDateTime],
+                           lastSeenSeasons: Map[Season, SeasonStateDetails],
                            lastSeen: Option[LocalDateTime] = None,
                            allSeasonsPostCreated: Option[LocalDateTime] = None,
                            shouldCallTwitter: Boolean = true
@@ -87,22 +88,22 @@ class PersistentSeasonSenderSpec
     }
   }
 
-  private def runAndVerifyAllSeasons(f: FixtureParam, dateTime: LocalDateTime): Map[Season, LocalDateTime] = {
-    def checkSeason(season: Season, seasonMap: Map[Season, LocalDateTime]): Unit = {
+  private def runAndVerifyAllSeasons(f: FixtureParam, dateTime: LocalDateTime): Map[Season, SeasonStateDetails] = {
+    def checkSeason(season: Season, seasonMap: Map[Season, SeasonStateDetails]): Unit = {
       runAndVerify(f, seasonInfo.copy(season = season), seasonMap)
-      verify(f.tweetSender, never).postAllSeasonsStatus()
+      verify(f.tweetSender, never).postAllSeasonsStatus(seasonMap)
     }
 
-    val seasonMap = Map(Season.WINTER -> dateTime)
+    val seasonMap = Map(Season.WINTER -> SeasonStateDetails(temp, dateTime))
     checkSeason(Season.WINTER, seasonMap)
 
-    val seasonMap2 = seasonMap + (Season.SPRING -> f.now)
+    val seasonMap2 = seasonMap + (Season.SPRING -> SeasonStateDetails(temp, f.now))
     checkSeason(Season.SPRING, seasonMap2)
 
-    val seasonMap3 = seasonMap2 + (Season.SUMMER -> f.now)
+    val seasonMap3 = seasonMap2 + (Season.SUMMER -> SeasonStateDetails(temp, f.now))
     checkSeason(Season.SUMMER, seasonMap3)
 
-    val seasonMap4 = seasonMap3 + (Season.FALL -> f.now)
+    val seasonMap4 = seasonMap3 + (Season.FALL -> SeasonStateDetails(temp, f.now))
     checkSeason(Season.FALL, seasonMap4)
 
     seasonMap4

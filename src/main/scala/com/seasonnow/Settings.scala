@@ -10,6 +10,7 @@ object Settings {
   val defaultWeatherFetchFrequency: FiniteDuration = 1.minute
   val defaultSnapshotFrequency = 10
   val defaultSnapshotAmount = 2
+  val defaultLastSeenAfter = 5
 }
 
 case class Settings(config: Config = ConfigFactory.load()) {
@@ -21,6 +22,8 @@ case class Settings(config: Config = ConfigFactory.load()) {
   val weatherFetchFrequency: FiniteDuration = Try(baseSettings.getDuration("weather-fetch-frequency"))
     .map(_.toScala)
     .getOrElse(defaultWeatherFetchFrequency)
+
+  val lastSeenAfter: Int = Try(baseSettings.getInt("last-seen-text-after")).getOrElse(defaultLastSeenAfter)
 
   val weatherApiKey: String = baseSettings.getString("api.weather-api-key")
 

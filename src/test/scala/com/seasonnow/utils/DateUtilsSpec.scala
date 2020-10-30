@@ -33,6 +33,9 @@ class DateUtilsSpec extends FixtureAnyWordSpecLike with Matchers {
       val lastSeen = f.now.minusMinutes(8)
       DateUtils.calculateLastSeen(lastSeen, f.now) shouldBe "8 minutes"
     }
+    "format date" in { f =>
+      DateUtils.formatTime(f.now) shouldBe "04:40 PM"
+    }
   }
 
   case class FixtureParam(now: LocalDateTime)

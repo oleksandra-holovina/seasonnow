@@ -1,8 +1,14 @@
 package com.seasonnow.utils
 
+import java.time.format.DateTimeFormatter
 import java.time.{Duration, LocalDateTime, Period}
 
 object DateUtils {
+
+  def formatTime(dateTime: LocalDateTime): String = {
+    val formatter = DateTimeFormatter.ofPattern("hh:mm a")
+    formatter.format(dateTime)
+  }
 
   def calculateLastSeen(lastSeen: LocalDateTime, now: LocalDateTime): String = {
     val period = Period.between(lastSeen.toLocalDate, now.toLocalDate)
